@@ -20,6 +20,10 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
      */
     public $fileExtension = '.twig';
     /**
+     * @var bool Auto-add current controller and file path to twig loader
+     */
+    public $autoAddPath = true;
+    /**
       * @var array Twig environment options
       * @see http://twig.sensiolabs.org/doc/api.html#environment-options
       */
@@ -140,12 +144,13 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
     public function renderFile($context, $sourceFile, $data, $return)
     {
         // add controller view path
-        if ($context instanceof CController) {
-            $path = $context->getViewPath();
-            if (!in_array($path, $this->_paths) && file_exists($path)) {
-                $this->_twig->getLoader()->addPath($path);
-                $this->_paths[] = $path;
-            }
+        if ($this->autoAddPath && $context instanceof CController) {
+            $this->_addPath($context->getViewPath());
+        }
+
+        // add current file path
+        if ($this->autoAddPath && file_exists($sourceFile)) {
+            $this->_addPath(dirname($sourceFile));
         }
 
         // current controller properties will be accessible as {{ this.property }}
@@ -259,6 +264,14 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
                                              'Incorrect options for "{classType}" [{name}]',
                                              array('{classType}'=>$classType, '{name}'=>$name)));
             }
+        }
+    }
+
+    private function _addPath($path)
+    {
+        if (!in_array($path, $this->_paths) && file_exists($path)) {
+            $this->_twig->getLoader()->addPath($path);
+            $this->_paths[] = $path;
         }
     }
 }
