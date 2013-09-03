@@ -82,6 +82,7 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         }
 
         $this->_paths[] = $app->getBasePath();
+        $this->_paths[] = $app->getBasePath() . DIRECTORY_SEPARATOR . 'views';
 
         $loader = new Twig_Loader_Filesystem($this->_paths);
 
@@ -138,6 +139,15 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
      */
     public function renderFile($context, $sourceFile, $data, $return)
     {
+        // add controller view path
+        if ($context instanceof CController) {
+            $path = $context->getViewPath();
+            if (!in_array($path, $this->_paths) && file_exists($path)) {
+                $this->_twig->getLoader()->addPath($path);
+                $this->_paths[] = $path;
+            }
+        }
+
         // current controller properties will be accessible as {{ this.property }}
         $data['this'] = $context;
 
